@@ -1,8 +1,25 @@
+// Author: Karl Marrett
+// adaptation from diannao basic kernels
+// to cuda kernel for learning purposes
+// MIT license
+
 #include <iostream>
 #include <string>
+#include <stdio.h>
+#include <cuda_runtime.h>
+#include <helper_cuda.h>
 #include "dnn.hpp"
 
 using namespace std;
+
+#define assertm(expr, msg) assert(((void) msg, expr));
+
+int Nx;
+int Ny;
+int Kx;
+int Ky;
+int Ni;
+int Nn;
 
 //Define the parameters if not defined externally
 #ifndef Sy
@@ -138,10 +155,15 @@ void  convolution_layer(VTYPE (&synapse)[Ky][Kx][Nn][Ni],
   }
 }
 
-
-
-
 int main(const int argc, const char** argv) {
+  assertm(argc == 6, "argc must = 6\nCorrect usage nx ny kx ky ni nn\n");
+  int Nx = atoi(argv[0]);
+  int Ny = atoi(argv[1]);
+  int Kx = atoi(argv[2]);
+  int Ky = atoi(argv[3]);
+  int Ni = atoi(argv[4]);
+  int Nn = atoi(argv[5]);
+  
   cout << "allocating memory\n";
 
   synapse   = (VTYPE (*)[Ky][Kx][Nn][Ni])  aligned_malloc(64,  SYNAPSE_SIZE*sizeof(VTYPE));
