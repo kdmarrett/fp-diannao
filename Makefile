@@ -242,7 +242,7 @@ ALL_LDFLAGS += $(addprefix -Xlinker ,$(LDFLAGS))
 ALL_LDFLAGS += $(addprefix -Xlinker ,$(EXTRA_LDFLAGS))
 
 # Common includes and paths for CUDA
-INCLUDES  := -I../NVIDIA_CUDA-10.1_Samples/common/inc
+INCLUDES  := -I../NVIDIA_CUDA-10.1_Samples/common/inc -Iextern/fmt/include
 LIBRARIES :=
 
 ################################################################################
@@ -290,8 +290,11 @@ convolution.o:convolution.cu
 convolution: convolution.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
-run: build
-	$(EXEC) ./convolution
+conv1: build
+	$(EXEC) ./convolution 224 224 3 3 64 64
+
+conv2: build
+	$(EXEC) ./convolution 14 14 3 3 512 512
 
 clean:
 	rm -f convolution convolution.o
