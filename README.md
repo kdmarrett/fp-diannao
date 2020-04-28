@@ -1,5 +1,7 @@
 # fp-diannao
 
+* Karl Marrett, Eddie Huang
+
 * This is extremely simple CUDA version of classifier/convolution dnn kernels, based on data layout and implementation from diannao paper:
 http://novel.ict.ac.cn/ychen/pdf/DianNao.pdf
 
@@ -46,3 +48,16 @@ But global memory size
 Batch size is set to 32.
 
 Since the max number of threads per block is 1024 After reviewing the device properties
+
+To parallelize the classifier for the first problem size, we parallelized using on global 
+work-groups on Nn and on local workgroups on Ni, with each local workgroup responsible for 
+accumulating 49 elements of Ni. While a larger parallelization factor was certainly
+possible, (we tried parallelizing such that each work-item only did one multiply) which led
+to performance of about 25 TFlops, without reduction, we didn't have time to implement anything
+beyond a lazy reduction, which netted us about 7 TFLops of performance. No batching was
+applied here, though it almost certainly would have resulted in better throughput, due
+to the fact that resources weren't fully utilized.
+
+A similar strategy was applied for the second problem size, and as the Ni dimension was
+a power of 2, the lazy reduction worked. However, due to a lack of batching, and 
+resource utilization that was not close to full, the performance was only about 1 TFlop.
