@@ -1,5 +1,7 @@
 # fp-diannao
 
+* Karl Marrett, Eddie Huang
+
 * This is extremely simple CUDA version of classifier/convolution dnn kernels, based on data layout and implementation from diannao paper:
 http://novel.ict.ac.cn/ychen/pdf/DianNao.pdf
 
@@ -47,16 +49,57 @@ Batch size is set to 32.
 
 Since the max number of threads per block is 1024 After reviewing the device properties
 
+## Classification
+
+To parallelize the classifier for the first problem size, we parallelized using on global 
+work-groups on Nn and on local workgroups on Ni, with each local workgroup responsible for 
+accumulating 49 elements of Ni. While a larger parallelization factor was certainly
+possible, (we tried parallelizing such that each work-item only did one multiply) which led
+to performance of about 25 TFlops, without reduction, we didn't have time to implement anything
+beyond a lazy reduction, which netted us about 7 TFLops of performance. No batching was
+applied here, though it almost certainly would have resulted in better throughput, due
+to the fact that resources weren't fully utilized.
+
+A similar strategy was applied for the second problem size, and as the Ni dimension was
+a power of 2, the lazy reduction worked. However, due to a lack of batching, and 
+resource utilization that was not close to full, the performance was only about 1 TFlop.
+
 ### CUDNN
 
+Since cudnn benchmarks were provided, we elected not to benchmark it ourselves. Since cudnn 
+is close source we instead elected to find what information was available regarding its implementation
+and understand it's high performance. Our reasonings are detailed as follows.
 To improve memory further beyond using shared memory, a logical next step would be to convert the convolution
 into matrix multiplication [1]. However, in order to take advantage of this to the full extent
-most sources recommend using the built in GEMM operation optimized for cuda devices [2].
+sources recommend using the built in GEMM operation optimized for cuda devices [2].
 
 Doing this requires an unroll rearrangement of the neuron_i array to facilitate a matrix
 multiply operation to produce each output element. Matrix multiply can further reduce pressure
 on global memory accesses as it has a much higher computation to communication ratio
-however it requires that the inputs are replicated `Kx * Ky` times.
+however it requires that the inputs are replicated `Kx * Ky` times which can be a serious concern
+on GPUs with smaller global memory sizes or larger models. At an ecosystem level, 
+GEMM also benefits of being highly optimized for various target hardwares since it stands at the center of many needed
+transformations, as indicated for example by being part of the cuBLAS library. 
+
+GEMM was not targeted in this report since it relies significantly on pre-optimized
+function calls as opposed to working with the fundamental computation and iteratively incorporating
+and learning more of the GPUs hardware features. Discussing GEMM is also important for understanding
+the standard cudnn implementation of convolution. CUDNN has other implementations such as 
+CUFFT--decomposing to frequency domain and multiplying--and more modern techniques such as Winograd and separable
+filters. While CUDNN is closed source, various representatives from Nvidia or affiliated have
+explained the basic scheme of the the GEMM-based cudnn convolution. It's major advantage to the
+the simply unrolling the input feature map and leveraging cuBLAS GEMM is that it supports a streaming
+approach of loading the input feature map into device memory. This is particularly useful since
+the input feature map has to be duplicated and rearranged (unrolled) which is much faster in
+device memory. Additionally, the streaming (or blocked) implementation automatically handles the
+overlap of communication and computation, meaning a kernel is launched while the next block
+of input feature map is loaded to device memory.
+
+By not streaming portions of memory or overlapping the computation with the loads in our own convolution 
+we severly limited the final bandwidth we could achieve. This causes taking all of latency
+of moving the input and kernel arrays to global memory and back upfront.
+
+#### References
 
 [1] Kumar Chellapilla, Sidd Puri, Patrice Simard. High Performance Convolutional Neural Networks
 for Document Processing. Tenth International Workshop on Frontiers in Handwriting Recognition,
