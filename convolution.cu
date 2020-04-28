@@ -329,8 +329,7 @@ int main(const int argc, const char** argv) {
   int neuron_i_tile_width = Tn + Kx - 1;
   // this shared memory will hold both the 
   // tile of the kernel and the tile of the neuron_i
-  shared_mem_size = sizeof(VTYPE) * neuron_i_tile_width * neuron_i_tile_width +
-      Kx * Kx;
+  shared_mem_size = sizeof(VTYPE) * (neuron_i_tile_width * neuron_i_tile_width + Kx * Kx);
   convolution_layer_shared<<<gridDim, blockDim, shared_mem_size>>>(synapse, neuron_i, neuron_n2, Nx, Ny, Kx, Ky, Ni, Nn, B, tile_num_width, Tn, neuron_i_tile_width);
   check(cudaPeekAtLastError());
   check(cudaDeviceSynchronize());
@@ -344,10 +343,10 @@ int main(const int argc, const char** argv) {
    cout << "Warning parallelized version took longer than serial\n";
  }
 
-
  // as a host function this may cause nvprof to hang silently
  compare(neuron_n, neuron_n2,NYSCL*NXSCL*Nn);
 #endif
+
 
  check(cudaFree(synapse));
  check(cudaFree(neuron_i));

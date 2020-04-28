@@ -271,6 +271,8 @@ EXEC ?= @echo "[@]"
 endif
 
 ################################################################################
+DEBUG_FLAGS := -G -Xcompiler -rdynamic 
+#-lineinfo 
 
 # Target rules
 all: build
@@ -285,7 +287,7 @@ else
 endif
 
 convolution.o:convolution.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c -g $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) $(DEBUG_FLAGS) -o $@ -c $<
 
 convolution: convolution.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
