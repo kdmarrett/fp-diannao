@@ -46,3 +46,20 @@ But global memory size
 Batch size is set to 32.
 
 Since the max number of threads per block is 1024 After reviewing the device properties
+
+### CUDNN
+
+To improve memory further beyond using shared memory, a logical next step would be to convert the convolution
+into matrix multiplication [1]. However, in order to take advantage of this to the full extent
+most sources recommend using the built in GEMM operation optimized for cuda devices [2].
+
+Doing this requires an unroll rearrangement of the neuron_i array to facilitate a matrix
+multiply operation to produce each output element. Matrix multiply can further reduce pressure
+on global memory accesses as it has a much higher computation to communication ratio
+however it requires that the inputs are replicated `Kx * Ky` times.
+
+[1] Kumar Chellapilla, Sidd Puri, Patrice Simard. High Performance Convolutional Neural Networks
+for Document Processing. Tenth International Workshop on Frontiers in Handwriting Recognition,
+Université de Rennes 1, Oct 2006, La Baule (France). ffinria-00112631f
+
+[2] Programming Massively Parallel Processors. Kirk et al.
