@@ -285,16 +285,16 @@ else
 endif
 
 convolution.o:convolution.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c -g $<
 
 convolution: convolution.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
 conv1: build
-	$(EXEC) ./convolution 224 224 3 3 64 64
+	$(EXEC) ./convolution 224 224 3 3 64 64 1 16
 
 conv2: build
-	$(EXEC) ./convolution 14 14 3 3 512 512
+	$(EXEC) ./convolution 14 14 3 3 512 512 1 16
 
 clean:
 	rm -f convolution convolution.o

@@ -21,9 +21,10 @@ __attribute__ ((noinline))  void begin_roi() {
   usec=gettime();
 }
 
-__attribute__ ((noinline))  void end_roi()   {
+__attribute__ ((noinline))  uint64_t end_roi()   {
   usec=(gettime()-usec);
   std::cout << "elapsed (sec): " << usec/1000000.0 << "\n";
+  return usec;
 }
 
 
