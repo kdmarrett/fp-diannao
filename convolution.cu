@@ -14,6 +14,7 @@
 using namespace std;
 
 // #define TEST
+//#define CONV_SHARED
 
 #define assertm(expr, msg) assert(((void) msg, expr));
 
@@ -322,6 +323,8 @@ int main(const int argc, const char** argv) {
   check(cudaDeviceSynchronize());
   uint64_t parallelized = end_roi();
 
+#ifdef CONV_SHARED
+
   cout << "starting parallel shared memory computation\n";
 
   begin_roi();
@@ -335,6 +338,7 @@ int main(const int argc, const char** argv) {
   check(cudaDeviceSynchronize());
   uint64_t shared = end_roi();
   cout << "shared version speedup factor compared to parallelized: " << parallelized / shared << '\n';
+#endif
 
 #ifdef TEST
  cout << "parallel version speedup factor to baseline: " << baseline / parallelized << '\n';
