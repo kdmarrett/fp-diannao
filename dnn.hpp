@@ -21,10 +21,11 @@ __attribute__ ((noinline))  void begin_roi() {
   usec=gettime();
 }
 
-__attribute__ ((noinline))  void end_roi(int num_ops)   {
+__attribute__ ((noinline))  uint64_t end_roi(const char* stamp, const uint64_t num_ops)   {
   usec=(gettime()-usec);
-  std::cout << "elapsed (sec): " << usec/1000000.0 << "\n";
-  std::cout << "Perf: " << num_ops/(usec*1e3) << " GFlops\n";
+  std::cout << "elapsed (sec): " << usec/1000000.0 << '\n';
+  std::cout << stamp << " perf: " << num_ops/(usec*1e3) << " GFlops\n";
+  return usec;
 }
 
 

@@ -2,6 +2,8 @@
 
 * Karl Marrett, Eddie Huang
 
+* forked cpu project, adapted for cuda, tuned for Titan V
+
 * This is extremely simple CUDA version of classifier/convolution dnn kernels, based on data layout and implementation from diannao paper:
 http://novel.ict.ac.cn/ychen/pdf/DianNao.pdf
 
@@ -10,12 +12,19 @@ http://novel.ict.ac.cn/ychen/pdf/DianNao.pdf
 * Currently, Makefile is configured for example layers from VGG16.
 https://arxiv.org/abs/1409.1556
 
-## Optimization strategy
-The data arrays use Cuda's modern unified memory. Different convolution or input layer sizes are specified
-via runtime parameters to the executable. The simple cuda kernel example is implemented for batch size 1
-is launched with a single thread and thread block and no parallel logic for simplicity.
-The output of this function is therefore treated as ground truth for exploration of the other various 
-strategies and compared at the end of the convolution execution.
+## Convolution
+
+The data arrays use Cuda's modern unified memory. Different convolution or
+input layer sizes are specified via runtime parameters to the executable. The
+simple cuda kernel example is implemented for batch size 1 is launched with a
+single thread and thread block and no parallel logic for simplicity. Due to
+it's slowness it was only used for ground truth correctness along with the
+ported cpu version of convolution.  Basic threading schemes were at least 2800x
+faster than the single thread version understandably.
+
+The output of this function is therefore treated as ground truth for
+exploration of the other various strategies and compared at the end of the
+convolution execution when the TEST macro is on.
 
 To benchmark and profile the implementation a useful starting point is:
 `NVIDIA_CUDA-10.1_Samples/1_Utilities/deviceQuery/deviceQuery`
@@ -23,18 +32,19 @@ To benchmark and profile the implementation a useful starting point is:
 Since this project tunes an implementation for a single processor Titan V we can list some of the
 relevant parameters that are needed for a performant implementation.
 
-The global memory is 12 GB, the data sizes we use are:
+The global memory is 12 GB, the data sizes we use before batching are:
 
-Input: Conv1: Nx=224 Ny=224 Kx=3 Ky=3 Ni=64 Nn=64
+Input: Conv1: Nx=224 Ny=224 Kx=3 Ky=3 Ni=64 Nn=64 B=1
 which is about: 
-2^8 * 2^8 * 2^3 * 2^6 * 2^6
-2^31
-Since we use 2 byte floats this occupies 4 GB of global memory
-
-After adapting the test function to verify any correctness issues with the parallelized kernel
-I found that for the conv1 kernel the first run on a cold cache took 8.1 e-6 seconds
-whereas the second run with the exact settings to 1.1 e-6 seconds an 8x difference. Besides
-indicating that this is a serious factor that needs to be controlled when bencharking
+2^8 * 2^8 * 2^3 * 2^6 * 2^6 or about 2^31
+Since we use 2 byte floats this occupies 4 GB of global memory. The filter bank (synapses)
+had a size of about 2^8 * 2^6 * 2^6 which is about 2^22 or 8 MB. The set of output
+neurons has a size of 2^6 * 2^8 * 2^8 or 2^22 aka 8 MB. Thus we checked batch sizes
+of 1 2 3 4 8 and 12. Despite batch size of 3 overriding the global memory limits on
+the GPU, only a batch size of about 16 or higher caused the cuda helper checks of the
+memory malloc to fail. As a performance measure we take the latency of the operation
+by forcing a device synchronize host code and dividing by the total computations
+of the naive implementations (product of all original for loop sizes).
 
 Without substantially changing the computation patterning, the initial implementation
 has direct parallelism over the output feature maps `Nn` and the height `Nx` and width `Ny` of
@@ -42,12 +52,19 @@ the input feature maps. This means the max parallelism would be `Nn * Nx * Ny` w
 about 2^22. The peak throughput of the Titan V is 110 Teraflops or about 2^47 FLOPS
 which means to take advantage of the maximum concurrency afforded by the device we should
 boost the batch size which we'll treat as the hightest dimension which is also fully
-parallelizable. Our mini batch size can be up to ~2^47 / 2^22 or 2^15, ~3.2e4
-But global memory size
+parallelizable. We profiled across batch sizes and tile sizes in a benchmark matrix 
+pattern as shown by `script.sh`. The highest performance . These implementations
+rely solely on threads accessing global memory as opposed to leveraging the shared
+or constant memory banks, which greatly reduces there throughput. To combat this
+we implemented a shared memory approach where threads collaboratively load portions
+of neuron_i and synapses needed to compute one element of the output feature maps
+`neuron_n` for a single batch sample. This function could not pass the tests by 
+assignment deadline so we moved on. The implementation is based off a suggested
+approach in [1] however, our implementation did not pass tests so it's performance
+is not reported here.
 
-Batch size is set to 32.
-
-Since the max number of threads per block is 1024 After reviewing the device properties
+For the non-shared memory kernels shown the highest performance recorded is 82.4 GFLOPS
+for a batch size of 2 and tile size of 8.
 
 ## Classification
 

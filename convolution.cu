@@ -14,7 +14,7 @@
 using namespace std;
 
 // #define TEST
-//#define CONV_SHARED
+// #define CONV_SHARED
 
 #define assertm(expr, msg) assert(((void) msg, expr));
 
@@ -279,13 +279,14 @@ int main(const int argc, const char** argv) {
 
   check(cudaDeviceSynchronize());
 
+  uint64_t total_flops = static_cast<uint64_t>(Kx) * Ky * Nn * Ni * Ny * Nx * B;
+
   cout << "fill arrays\n";
-  begin_roi();
   fill(synapse, SYNAPSE_SIZE);
   fill(neuron_i, neuron_i_size);
-  end_roi();
 
   size_t shared_mem_size;
+
 #ifdef TEST
 #ifdef CPU
   cout << "starting sequential cpu\n";
@@ -293,7 +294,7 @@ int main(const int argc, const char** argv) {
 
   convolution_layer(synapse, neuron_i, neuron_n, Nx, Ny, Kx, Ky, Ni, Nn, B, Tn);
 
-  uint64_t cpu_baseline = end_roi();
+  uint64_t cpu_baseline = end_roi("sequential", total_flops);
 #endif
 
   cout << "starting sequential gpu\n";
@@ -305,7 +306,7 @@ int main(const int argc, const char** argv) {
 
   check(cudaDeviceSynchronize());
 
-  uint64_t baseline = end_roi();
+  uint64_t baseline = end_roi("sequential gpu", total_flops);
 #endif
 
   cout << "starting parallel computation\n";
@@ -321,7 +322,7 @@ int main(const int argc, const char** argv) {
   convolution_layer_parallel<<<gridDim, blockDim>>>(synapse, neuron_i, neuron_n2, Nx, Ny, Kx, Ky, Ni, Nn, B, tile_num_width);
   check(cudaPeekAtLastError());
   check(cudaDeviceSynchronize());
-  uint64_t parallelized = end_roi();
+  uint64_t parallelized = end_roi("parallel gpu", total_flops);
 
 #ifdef CONV_SHARED
 
@@ -336,7 +337,7 @@ int main(const int argc, const char** argv) {
   convolution_layer_shared<<<gridDim, blockDim, shared_mem_size>>>(synapse, neuron_i, neuron_n2, Nx, Ny, Kx, Ky, Ni, Nn, B, tile_num_width, Tn, neuron_i_tile_width);
   check(cudaPeekAtLastError());
   check(cudaDeviceSynchronize());
-  uint64_t shared = end_roi();
+  uint64_t shared = end_roi("shared", total_flops);
   cout << "shared version speedup factor compared to parallelized: " << parallelized / shared << '\n';
 #endif
 

@@ -1,12 +1,11 @@
-for i in 1 8 16 32 64 128 
+for i in 1 2 3 4 8 12 14
 do
   echo "batch size $i"; 
-  ./convolution 224 224 3 3 64 64 $i 16 | grep speedup;
-done;
-
-for i in 1 8 16 32 
-do
-  echo "tile size $i"; 
-  # ./convolution 224 224 3 3 64 64 128 $i | grep speedup;
-  /usr/local/cuda-10.1/bin/nvprof ./convolution 224 224 3 3 64 64 128 $i 
+  for j in 1 2 4 8 16 32 
+  do
+    echo "tile size $j"; 
+    ./convolution 224 224 3 3 64 64 $i $j | egrep GFlops;
+    # /usr/local/cuda-10.1/bin/nvprof ./convolution 224 224 3 3 64 64 1 $i 
+  done;
+  echo;
 done;
