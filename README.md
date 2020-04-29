@@ -87,8 +87,8 @@ Since cudnn benchmarks were provided, we elected not to benchmark it ourselves. 
 is close source we instead elected to find what information was available regarding its implementation
 and understand it's high performance. Our reasonings are detailed as follows.
 To improve memory further beyond using shared memory, a logical next step would be to convert the convolution
-into matrix multiplication [1]. However, in order to take advantage of this to the full extent
-sources recommend using the built in GEMM operation optimized for cuda devices [2].
+into matrix multiplication [2]. However, in order to take advantage of this to the full extent
+sources recommend using the built in GEMM operation optimized for cuda devices [1].
 
 Doing this requires an unroll rearrangement of the neuron_i array to facilitate a matrix
 multiply operation to produce each output element. Matrix multiply can further reduce pressure
@@ -118,11 +118,11 @@ of moving the input and kernel arrays to global memory and back upfront.
 
 #### References
 
-[1] Kumar Chellapilla, Sidd Puri, Patrice Simard. High Performance Convolutional Neural Networks
+[1] Programming Massively Parallel Processors. Kirk et al.
+
+[2] Kumar Chellapilla, Sidd Puri, Patrice Simard. High Performance Convolutional Neural Networks
 for Document Processing. Tenth International Workshop on Frontiers in Handwriting Recognition,
 Université de Rennes 1, Oct 2006, La Baule (France). ffinria-00112631f
-
-[2] Programming Massively Parallel Processors. Kirk et al.
 
 ## Appendix
 
