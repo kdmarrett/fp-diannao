@@ -5,25 +5,11 @@ import os
 import subprocess
 from datetime import datetime
 
+# import the consolidated parameter 
+# space across codebase
+from param_space import *
+
 # w,h,c,n (elem / batch),k,f_w,f_h,pad_w,pad_h,stride_w,stride_h,precision,fwd_time (usec),fwd_algo,Ops (mill),TOPS,Max TFLOPS,Roof Model:,Model TOPS,Mem Read (GB),Mem Time (usec),Mem TOPS,,Model Error,Abs Error
-
-# int Nx = atoi(argv[1]);
-# int Ny = atoi(argv[2]);
-# int Kx = atoi(argv[3]);
-# int Ky = atoi(argv[4]);
-# int Ni = atoi(argv[5]);
-# int Nn = atoi(argv[6]);
-# int B = atoi(argv[7]);
-# int Tn = atoi(argv[8]);
-
-Nx = [ 224 ]
-Ny = [ 224 ]
-Kx = [ 3 ]
-Ky = [ 3 ]
-Ni = [ 64 ]
-Nn = [ 64 ]
-B = [ 1, 2, 3, 4, 8, 12, 14]
-T = [ 1, 2, 4, 8, 16, 32]
 
 params = ''
 for nx in Nx:
