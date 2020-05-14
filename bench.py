@@ -22,8 +22,8 @@ Kx = [ 3 ]
 Ky = [ 3 ]
 Ni = [ 64 ]
 Nn = [ 64 ]
-B = [ 1 2 3 4 8 12 14]
-T = [ 1 2 4 8 16 32]
+B = [ 1, 2, 3, 4, 8, 12, 14]
+T = [ 1, 2, 4, 8, 16, 32]
 
 params = ''
 for nx in Nx:
@@ -37,7 +37,7 @@ for nx in Nx:
                 # /usr/local/cuda-10.1/bin/nvprof ./convolution 224 224 3 3 64 64 1 $i
                 # | egrep GFlops;
                 # to run in parallel uses ' & '
-                params += './convolution 224 224 3 3 64 64 %s %s & ' % (nx, ny, kx, ky, ni, nn, b, t)
+                params += './convolution %s %s %s %s %s %s %s %s & ' % (nx, ny, kx, ky, ni, nn, b, t)
                 print(params)
 
 # make sure you do not leave a final & sign on a command
