@@ -22,35 +22,21 @@ def parse_time(log, phrase, token_idx=-2):
 show_figs = False
 plot= False
 
-assocs = [1, 2, 4, 8, 16]
-cache_offset = 0
-# nvprof or times
-metrics = ['system.cpu.ipc_total', 'dcache.overall_hits::.cpu.data',
-        'dcache.overall_misses::.cpu.data',
-        'system.l2.overall_hits::.cpu.data',
-        'system.l2.overall_misses::.cpu.data'][1:]
-kernels = ['lfsr', 'sieve', 'spmv', 'mm', 'merge'][:]
-policies = ['RandomRP', 'NMRURP', 'LIPRP'][:]
-caches = [1, 2]
-results = np.zeros((len(kernels), len(policies), len(metrics), len(assocs)) )
+# nvprof, times, etc.
+kernels = ['convolution']
+metrics = ['GFlops']
+results = np.zeros((len(kernels), len(metrics)) )
 
 params = ''
 for ki, kernel in enumerate( kernels ):
-    # print(kernel)
-    for pi, policy in enumerate( policies ):
-        # print(policy)
         for mi, metric in enumerate( metrics ):
-            # print(metric)
-            for ai, assoc in enumerate( assocs ):
-                # print(assoc)
-                cmd = 'rg -e %s output-%s-%s-%d/stats.txt | awk \'{print $2}\'' % (metric, kernel, policy, assoc)
+                cmd=''
                 try:
-                    log = subprocess.check_output('rg -e %s output-%s-%s-%d/stats.txt | awk \'{print $2}\''
-                            % (metric, kernel, policy, assoc), stderr=subprocess.STDOUT, shell=True )
+                    log = subprocess.check_output('egrep %s prof-%s-%s.txt | awk \'{print $2}\''
+                            % (kernel, metric), stderr=subprocess.STDOUT, shell=True )
                     slog = log.decode('ascii')
                     remove_chars = [' ', '\t', '\n']
                     # print(slog)
-                    # print(cmd)
                     if len(slog) == 0:
                         print('Error running command: ' + '"' + str(cmd) + '"' + ' see above shell error')
                     else:
