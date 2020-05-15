@@ -1,5 +1,5 @@
 XX := nvcc
-TARGET := conv
+TARGET := cudnn_conv
 CUDNN_PATH := cudnn
 HEADERS := -I $(CUDNN_PATH)/include
 LIBS := -L $(CUDNN_PATH)/lib64 -L/usr/local/lib

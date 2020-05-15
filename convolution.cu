@@ -1,3 +1,4 @@
+// convolution.cu
 // Author: Karl Marrett
 // adaptation from diannao basic kernels
 // to cuda kernel for learning purposes
