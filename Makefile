@@ -277,7 +277,7 @@ DEBUG_FLAGS := -G -Xcompiler -rdynamic
 # Target rules
 all: build
 
-build: convolution
+build: convolution cudnn_conv
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -291,6 +291,10 @@ convolution.o:convolution.cu
 
 convolution: convolution.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
+
+cudnn_conv: cudnn_conv.cu 
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) $(DEBUG_FLAGS) -o $@ -c $<
+	
 
 conv1: build
 	$(EXEC) ./convolution 224 224 3 3 64 64 1 16

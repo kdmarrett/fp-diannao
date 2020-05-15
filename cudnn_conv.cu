@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
-#include <opencv2/opencv.hpp>
 
 #define checkCUDNN(expression)                               \
 {                                                          \
@@ -14,32 +13,6 @@
     << cudnnGetErrorString(status) << std::endl; \
     std::exit(EXIT_FAILURE);                               \
   }                                                        \
-}
-
-cv::Mat load_image(const char* image_path) {
-  cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_COLOR);
-  image.convertTo(image, CV_32FC3);
-  cv::normalize(image, image, 0, 1, cv::NORM_MINMAX);
-  std::cerr << "Input Image: " << image.rows << " x " << image.cols << " x "
-    << image.channels() << std::endl;
-  return image;
-}
-
-void save_image(const char* output_filename,
-    float* buffer,
-    int height,
-    int width) {
-  cv::Mat output_image(height, width, CV_32FC3, buffer);
-  // Make negative values zero.
-  cv::threshold(output_image,
-      output_image,
-      /*threshold=*/0,
-      /*maxval=*/0,
-      cv::THRESH_TOZERO);
-  cv::normalize(output_image, output_image, 0.0, 255.0, cv::NORM_MINMAX);
-  output_image.convertTo(output_image, CV_8UC3);
-  cv::imwrite(output_filename, output_image);
-  std::cerr << "Wrote output to " << output_filename << std::endl;
 }
 
 int main(int argc, const char* argv[]) {
@@ -53,8 +26,6 @@ int main(int argc, const char* argv[]) {
 
   bool with_sigmoid = (argc > 3) ? std::atoi(argv[3]) : 0;
   std::cerr << "With sigmoid: " << std::boolalpha << with_sigmoid << std::endl;
-
-  cv::Mat image = load_image(argv[1]);
 
   cudaSetDevice(gpu_id);
 
@@ -210,8 +181,6 @@ int main(int argc, const char* argv[]) {
 
   float* h_output = new float[image_bytes];
   cudaMemcpy(h_output, d_output, image_bytes, cudaMemcpyDeviceToHost);
-
-  save_image("cudnn-out.png", h_output, height, width);
 
   delete[] h_output;
   cudaFree(d_kernel);
