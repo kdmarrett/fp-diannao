@@ -1,3 +1,7 @@
+// classifier.cu
+// Author: Eddie Huang
+// MIT License
+
 #include <iostream>
 #include "dnn.hpp"
 
